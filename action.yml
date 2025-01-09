@@ -12,41 +12,41 @@ runs:
   using: 'composite'  
   steps:
 
-      - name: Run linting rules and tests
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      # - name: Run linting rules and tests
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 20
       
-      - name: Get Dependabot Alerts
-        uses: actions/github-script@v7
-        with: 
-          script: |
-            const fs = require('fs');
-            let page = 1;
-            let allAlerts = [];
+      # - name: Get Dependabot Alerts
+      #   uses: actions/github-script@v7
+      #   with: 
+      #     script: |
+      #       const fs = require('fs');
+      #       let page = 1;
+      #       let allAlerts = [];
 
-            while (true) {
-                const { data: alerts } = await github.rest.dependabot.listAlertsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-                page,
-                state: "open"
-                });
+      #       while (true) {
+      #           const { data: alerts } = await github.rest.dependabot.listAlertsForRepo({
+      #           owner: context.repo.owner,
+      #           repo: context.repo.repo,
+      #           per_page: 100,
+      #           page,
+      #           state: "open"
+      #           });
                 
-                if (alerts.length === 0) break;
+      #           if (alerts.length === 0) break;
                 
-                allAlerts = allAlerts.concat(alerts);
-                page++;
-            }
+      #           allAlerts = allAlerts.concat(alerts);
+      #           page++;
+      #       }
 
-            console.log(`Fetched ${allAlerts.length} total alerts for ${{ github.repository}}.`);
+      #       console.log(`Fetched ${allAlerts.length} total alerts for ${{ github.repository}}.`);
 
-            fs.writeFileSync('alerts.json', JSON.stringify(allAlerts, null, 2));
+      #       fs.writeFileSync('alerts.json', JSON.stringify(allAlerts, null, 2));
 
-      # - name: Create Tickets
-      #   shell: bash
-      #   run: ./create-jira-tickets.sh
+      - name: Create Tickets
+        shell: bash
+        run: ./create-jira-tickets.sh
 
       # - shell: bash
       #   env:
