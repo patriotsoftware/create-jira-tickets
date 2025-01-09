@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run Dependabot Check Script
-        uses: ./
+        uses: patriotsoftware/create-jira-tickets@$GITHUB_REF_NAME
         id: create-jira-tickets
         with:
            branch_action: main
