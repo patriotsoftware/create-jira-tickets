@@ -10,18 +10,20 @@ inputs:
 
 runs:
   using: 'composite'  
-  shell: bash     
   steps:
 
       - name: Run linting rules and tests
+        shell: bash     
         uses: actions/setup-node@v3
         with:
           node-version: 18
       
       - name: Get Dependabot Alerts
+        shell: bash     
         run: npm run get-dependabot-alerts
 
       - name: Create Tickets
+        shell: bash     
         run: ./create-jira-tickets.sh
       # - shell: bash
       #   env:
