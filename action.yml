@@ -1,0 +1,30 @@
+name: 'Create Jira Tickets for Dependabot Vulnerabilities'
+author: DevOps/BMiller
+description: Create Jira Tickets for Dependabot Vulnerabilities
+
+inputs:
+  branch_action:
+    description: 'Create, Recreate or Delete a branch database. Default is Create.'
+    required: false
+    default: 'Create'
+
+runs:
+  using: 'composite'       
+  steps:
+
+      - name: Run linting rules and tests
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - npm run get-dependabot-alerts
+
+      - ./create-jira-tickets.sh
+      # - shell: bash
+      #   env:
+      #     DATABASE: ${{ inputs.database_name }}
+      #     USERNAME: ${{ inputs.github_actor }}
+      #     SOURCE_DB: ${{ inputs.source_database_name }}
+      #     ACTION: ${{ inputs.branch_action }}
+      #     DB_CLUSTER: ${{ inputs.database_cluster }}
+      #   run: bash ${{ github.action_path }}/script.sh

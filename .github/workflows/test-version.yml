@@ -17,7 +17,6 @@ jobs:
       - name: Run Dependabot Check Script
         uses: ./
         id: create-jira-tickets
-        # with:
-        #   namespace: default
-        #   base-chart: ./testchart
+        with:
+           branch_action: main
 
