@@ -18,9 +18,11 @@ runs:
           node-version: 18
       
       - name: Get Dependabot Alerts
+        shell: bash
         run: npm run get-dependabot-alerts
 
       - name: Create Tickets
+        shell: bash
         run: ./create-jira-tickets.sh
 
       # - shell: bash
