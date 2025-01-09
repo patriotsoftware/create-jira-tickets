@@ -17,9 +17,11 @@ runs:
         with:
           node-version: 18
       
-      - run: npm run get-dependabot-alerts
+      - name: Get Dependabot Alerts
+        run: npm run get-dependabot-alerts
 
-      - run: ./create-jira-tickets.sh
+      - name: Create Tickets
+        run: ./create-jira-tickets.sh
       # - shell: bash
       #   env:
       #     DATABASE: ${{ inputs.database_name }}
