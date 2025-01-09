@@ -13,10 +13,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: Run Dependabot Check Script
-        uses: patriotsoftware/create-jira-tickets@initial-work
-        id: create-jira-tickets
+      - name: Authenticate with STAGING
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-           branch_action: main
+          aws-access-key-id: ${{ secrets.STAGING2_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.STAGING2_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - run: |
+          gh_token=$(aws secretsmanager get-secret-value --secret-id github_tokens --query SecretString --output text | jq -r .teamcity)
+          curl -X POST -H "Accept: application/vnd.github.v3+json" -u patriotgithubpackages:$gh_token https://api.github.com/repos/SynergyDataSystems/dependabot/alerts
+      # - name: Run Dependabot Check Script
+      #   uses: patriotsoftware/create-jira-tickets@initial-work
+      #   id: create-jira-tickets
+      #   with:
+      #      branch_action: main
 
