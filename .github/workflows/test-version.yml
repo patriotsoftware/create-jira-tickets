@@ -1,0 +1,23 @@
+name: Test helm-upload-test-action
+on: 
+  push:
+    branches:
+      - "*"
+      - "!main"
+  workflow_dispatch:
+
+jobs:
+  test-action:
+    name: Test create-jira-tickets
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Dependabot Check Script
+        uses: ./
+        id: create-jira-tickets
+        # with:
+        #   namespace: default
+        #   base-chart: ./testchart
+
