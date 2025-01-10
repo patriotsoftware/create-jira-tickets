@@ -11,7 +11,8 @@ inputs:
 runs:
   using: 'composite'  
   steps:
-
+    - name: Checkout code
+      uses: actions/checkout@v4
       # - name: Run linting rules and tests
       #   uses: actions/setup-node@v3
       #   with:
@@ -44,9 +45,9 @@ runs:
 
       #       fs.writeFileSync('alerts.json', JSON.stringify(allAlerts, null, 2));
 
-      - name: Create Tickets
-        shell: bash
-        run: ./create-jira-tickets.sh
+    - name: Create Tickets
+      shell: bash
+      run: ./create-jira-tickets.sh
 
       # - shell: bash
       #   env:
