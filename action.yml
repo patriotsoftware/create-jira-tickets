@@ -3,10 +3,17 @@ author: DevOps/BMiller
 description: Create Jira Tickets for Dependabot Vulnerabilities
 
 inputs:
-  branch_action:
-    description: 'Create, Recreate or Delete a branch database. Default is Create.'
-    required: false
-    default: 'Create'
+  github-repo:
+    description: 'Repo to run check on.'
+    required: true
+
+  user-id:
+    description: 'User to run api call as.'
+    required: true
+
+  user-pass:
+    description: 'passphrase for call.'
+    required: true
 
 runs:
   using: 'composite'  
