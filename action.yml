@@ -47,7 +47,7 @@ runs:
 
     - name: Create Tickets
       shell: bash
-      run: ./create-jira-tickets.sh
+      run: ./${{ github.action_path }}/create-jira-tickets.sh
 
       # - shell: bash
       #   env:
