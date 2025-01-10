@@ -11,6 +11,7 @@ low_sla=90
 echo "Today: $today"
 
 gh_token=$(aws secretsmanager get-secret-value --secret-id github_tokens --query SecretString --output text | jq -r .teamcity)
+echo ${INPUT_user-id}
 curl -L -H "Accept: application/vnd.github.v3+json" -u ${INPUT_user-id}:${INPUT_user-pass} https://api.github.com/repos/SynergyDataSystems/${INPUT_github-repo}/dependabot/alerts 
 #> alerts.json
 #ls
