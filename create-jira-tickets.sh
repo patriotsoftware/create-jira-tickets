@@ -16,7 +16,7 @@ todays_alert_count=$(jq '. | length' todays_alerts.json)
 echo "Found $todays_alert_count vulnerabilities from today."
 
 
-if [ "$todays_alert_count" -eq "0" ]; then
+if [ $todays_alert_count -ne 0 ]; then
           jq -c 'group_by(.security_advisory.severity) | map({severity: .[0].security_advisory.severity, alerts: .})' todays_alerts.json > grouped_alerts.json
           
           grouped_alert_count=$(jq '. | length' grouped_alerts.json)
