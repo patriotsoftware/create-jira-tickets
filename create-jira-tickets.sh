@@ -10,6 +10,10 @@ low_sla=90
 
 echo "Today: $today"
 
+gh_token=$(aws secretsmanager get-secret-value --secret-id github_tokens --query SecretString --output text | jq -r .teamcity)
+curl -L -H "Accept: application/vnd.github.v3+json" -u patriotgithubpackages:$gh_token https://api.github.com/repos/SynergyDataSystems/$GITHUB_REPOSITORY/dependabot/alerts > alerts.json
+ls
+          
 jq '.' alerts.json >> todays_alerts.json
 
 todays_alert_count=$(jq '. | length' todays_alerts.json)
