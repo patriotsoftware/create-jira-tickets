@@ -55,8 +55,11 @@ runs:
     - name: Create Tickets
       shell: bash
       run: |
-        ls
         sh ${{ github.action_path }}/create-jira-tickets.sh
+      env:
+        INPUT_REPO: ${{ inputs.github-repo }}
+        INPUT_USER_ID: ${{ inputs.user-id }}
+        INPUT_USER_PASS: ${{ inputs.user-pass }}
 
       # - shell: bash
       #   env:
