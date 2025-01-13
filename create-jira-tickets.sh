@@ -36,7 +36,8 @@ fi
 
 # # Iterate through each group and create a Jira ticket
 jq -c '.[]' grouped_alerts.json | while read -r group; do
-          echo "$group" | jq -r '.severity'
+          echo "$group" 
+          exit 1
           # severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
           # severity_alerts=$(echo "$group" | jq -c '.alerts')
           # priority="None"
