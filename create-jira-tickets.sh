@@ -16,29 +16,29 @@ echo $INPUT_REPO
 echo $INPUT_USER_PASS
 curl -L -H "Accept: application/vnd.github.v3+json" -u $INPUT_USER_ID:$gh_token https://api.github.com/repos/$INPUT_REPO/dependabot/alerts > alerts.json
 #ls
-#cat alerts.json          
-jq '.' alerts.json >> todays_alerts.json
+cat alerts.json          
+# jq '.' alerts.json >> todays_alerts.json
 
-todays_alert_count=$(jq '. | length' todays_alerts.json)
-echo "Found $todays_alert_count vulnerabilities from today."
+# todays_alert_count=$(jq '. | length' todays_alerts.json)
+# echo "Found $todays_alert_count vulnerabilities from today."
 
 
-# if [ $todays_alert_count -ne 0 ]; then
-          jq -c 'group_by(.security_advisory.severity) | map({severity: .[0].security_advisory.severity, alerts: .})' todays_alerts.json > grouped_alerts.json
+# # if [ $todays_alert_count -ne 0 ]; then
+#           jq -c 'group_by(.security_advisory.severity) | map({severity: .[0].security_advisory.severity, alerts: .})' todays_alerts.json > grouped_alerts.json
           
-          grouped_alert_count=$(jq '. | length' grouped_alerts.json)
-          echo "Found $grouped_alert_count severity grouping(s) from today."
+#           grouped_alert_count=$(jq '. | length' grouped_alerts.json)
+#           echo "Found $grouped_alert_count severity grouping(s) from today."
           
-          severities=$(jq -r 'map(.severity) | join(", ")' grouped_alerts.json)
-          echo "Today's severities: $severities."
-# fi
+#           severities=$(jq -r 'map(.severity) | join(", ")' grouped_alerts.json)
+#           echo "Today's severities: $severities."
+# # fi
 
 
-# # Iterate through each group and create a Jira ticket
-jq -c '.[]' grouped_alerts.json | while read -r group; do
-          severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
-          echo $severity
-          severity_alerts=$(echo "$group" | jq -c '.alerts')
+# # # Iterate through each group and create a Jira ticket
+# jq -c '.[]' grouped_alerts.json | while read -r group; do
+#           severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
+#           echo $severity
+#           severity_alerts=$(echo "$group" | jq -c '.alerts')
           # priority="None"
           # sla_days=0
           
@@ -115,4 +115,4 @@ jq -c '.[]' grouped_alerts.json | while read -r group; do
           #     -u "${{ env.JIRA_USER_EMAIL }}:${{ env.JIRA_API_TOKEN }}" \
           #     -H "Content-Type: application/json" \
           #     -d "$issue_payload"
-done
+#done
