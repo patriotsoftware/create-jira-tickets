@@ -18,54 +18,188 @@ inputs:
 runs:
   using: 'composite'  
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      # - name: Run linting rules and tests
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 20
-      
-      # - name: Get Dependabot Alerts
-      #   uses: actions/github-script@v7
-      #   with: 
-      #     script: |
-      #       const fs = require('fs');
-      #       let page = 1;
-      #       let allAlerts = [];
+env:
+  GITHUB_REPOSITORY: ${{ github.repsitory }}
 
-      #       while (true) {
-      #           const { data: alerts } = await github.rest.dependabot.listAlertsForRepo({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           per_page: 100,
-      #           page,
-      #           state: "open"
-      #           });
-                
-      #           if (alerts.length === 0) break;
-                
-      #           allAlerts = allAlerts.concat(alerts);
-      #           page++;
-      #       }
+jobs:
+  create-jira-tickets:
+    name: Create Jira Tickets
+    runs-on: ubuntu-latest
 
-      #       console.log(`Fetched ${allAlerts.length} total alerts for ${{ github.repository}}.`);
+    steps:
+      - name: Install jq
+        run: sudo apt-get install -y jq
+        
+      - name: Generate GH token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 1093416
+          private-key: ${{ secrets.DEPENDABOT_READ_KEY }}
+          owner: ${{ github.repository_owner }}  # Scopes all repos in this org
 
-      #       fs.writeFileSync('alerts.json', JSON.stringify(allAlerts, null, 2));
+      - name: Fetch Dependabot Alerts with Github Script
+        id: fetch-dependabot-alerts
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            let page = 1;
+            let allAlerts = [];
+            
+            while (true) {
+              const { data: alerts } = await github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page,
+                state: "open"
+              });
+              
+              if (alerts.length === 0) break;
+              
+              allAlerts = allAlerts.concat(alerts);
+              page++;
+            }
+            
+            console.log(`Fetched ${allAlerts.length} total alerts for ${{ github.repository}}.`);
+            
+            fs.writeFileSync('alerts.json', JSON.stringify(allAlerts, null, 2));
+   
+      - name: Filter Today's Vulnerabilities
+        id: filter-todays-alerts
+        run: |
+          today=$(date -u +'%Y-%m-%d')
+          
+          echo "Today: $today"
+          
+          # jq --arg today "$today" '[.[] | select(.created_at | startswith($today))]' alerts.json > todays_alerts.json
+          
+          jq '.' alerts.json >> todays_alerts.json
+          cat todays_alerts.json
+          count=$(jq '. | length' todays_alerts.json)
+          echo "todays_alert_count=$count" >> $GITHUB_ENV
+          echo "Found $count vulnerabilities from today."
 
-    - name: Create Tickets
-      shell: bash
-      run: |
-        sh ${{ github.action_path }}/create-jira-tickets.sh
-      env:
-        INPUT_REPO: ${{ inputs.github-repo }}
-        INPUT_USER_ID: ${{ inputs.user-id }}
-        INPUT_USER_PASS: ${{ inputs.user-pass }}
+      - name: Group Vulnerabilities by Severity and Create Jira Tickets
+        id: group-vulnerabilities
+        if: env.todays_alert_count != '0'
+        run: |
+          # Group vulnerabilities by severity
+          jq -c 'group_by(.security_advisory.severity) | map({severity: .[0].security_advisory.severity, alerts: .})' todays_alerts.json > grouped_alerts.json
+          
+          count=$(jq '. | length' grouped_alerts.json)
+          echo "grouped_alert_count=$count" >> $GITHUB_ENV
+          echo "Found $count severity grouping(s) from today."
+          
+          severities=$(jq -r 'map(.severity) | join(", ")' grouped_alerts.json)
+          echo "Today's severities: $severities."
+          
+          # echo "Contents of grouped_alerts.json:"
+          # cat grouped_alerts.json
 
-      # - shell: bash
-      #   env:
-      #     DATABASE: ${{ inputs.database_name }}
-      #     USERNAME: ${{ inputs.github_actor }}
-      #     SOURCE_DB: ${{ inputs.source_database_name }}
-      #     ACTION: ${{ inputs.branch_action }}
-      #     DB_CLUSTER: ${{ inputs.database_cluster }}
-      #   run: bash ${{ github.action_path }}/script.sh
+      - name: Create Jira Tickets From Today's Vulnerabilities
+        id: create-jira-tickets
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_PROJECT_KEY: "SPG"
+        run: |
+          # Create Jira Tickets for Vulnerability Groups
+          JIRA_API_URL="https://patriotsoftware.atlassian.net/rest/api/2/issue"
+          today=$(date -u +'%Y-%m-%d')
+          
+          # Iterate through each group and create a Jira ticket
+          jq -c '.[]' grouped_alerts.json | while read -r group; do
+            echo $group
+            severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
+            severity_alerts=$(echo "$group" | jq -c '.alerts')
+            priority="None"
+            sla_days=0
+            
+            case "$severity" in
+              "CRITICAL")
+                priority="Highest"
+                sla_days=15
+                ;;
+              "HIGH")
+                priority="High"
+                sla_days=30
+                ;;
+              "MEDIUM")
+                priority="Medium"
+                sla_days=60
+                ;;
+              "LOW")
+                priority="Low"
+                sla_days=90
+                ;;
+              *)
+                echo "UNKNOWN STATUS"
+                ;;
+            esac
+            
+            sla_due_date=$(date -d "$today +$sla_days days" "+%Y-%m-%d")
+            repo_name=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+            
+            # Prepare a summary and description for the Jira ticket
+            summary="Dependabot $today for $repo_name: $severity Vulnerabilities"
+            description="\n*Repository*: [$repo_name|https://github.com/${{ github.repository}}/security/dependabot?q=is:open+severity:$severity+sort:newest]\n *Created Date*: $today\n *Severity*: $severity\n *SLA Days*: $sla_days \n *Due Date*: $sla_due_date\n\n----\n"
+            
+            echo "Processing Dependabot vulnerability grouping..."
+            echo "Repository: $repo_name"
+            echo "Severity: $severity"
+            echo "Priority: $priority"
+            echo "SLA Days: $sla_days"
+            echo "SLA Due Date: $sla_due_date"
+            
+            # Read all alerts into an array
+            mapfile -t alerts < <(echo "$severity_alerts" | jq -c '.[]')
+            
+            # Process the array
+            for i in "${!alerts[@]}"; do
+              alert="${alerts[$i]}"
+              title=$(echo "$alert" | jq -r '.security_advisory.summary')
+              package=$(echo "$alert" | jq -r '.dependency.package.name')
+              url=$(echo "$alert" | jq -r '.html_url')
+  
+              description+="*Package*: $package\n    *Title*: $title\n    *Details*: $url\n\n "
+            done
+            
+            # Use jq to build the JSON object
+            issue_payload=$(jq -n --arg summary "$summary" --arg description "$description" --arg priority "$priority" --arg duedate "$sla_due_date" '{
+              "fields": {
+                "project": { "key": "${{ env.JIRA_PROJECT_KEY }}" },
+                "summary": $summary, 
+                "description": $description,
+                "priority": { "name": $priority },
+                "duedate": $duedate,
+                "issuetype": { "name": "Story" }
+              }
+            }' | jq -r '.')
+            
+            echo "Creating Jira ticket for $severity vulnerabilities..."
+            
+            # Fix issues with double escaping the details
+            issue_payload=$(echo "$issue_payload" | sed 's/\\\\n/\\n/g') 
+            
+            echo "$issue_payload"
+            
+            # Create the Jira issue using the Jira REST API
+            curl -X POST "$JIRA_API_URL" \
+              -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$issue_payload"
+          done
+
+
+    # - name: Create Tickets
+    #   shell: bash
+    #   run: |
+    #     sh ${{ github.action_path }}/create-jira-tickets.sh
+    #   env:
+    #     INPUT_REPO: ${{ inputs.github-repo }}
+    #     INPUT_USER_ID: ${{ inputs.user-id }}
+    #     INPUT_USER_PASS: ${{ inputs.user-pass }}
+
