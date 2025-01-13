@@ -35,47 +35,47 @@ echo "Found $todays_alert_count vulnerabilities from today."
 
 
 # # Iterate through each group and create a Jira ticket
-# jq -c '.[]' grouped_alerts.json | while read -r group; do
-# severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
-# severity_alerts=$(echo "$group" | jq -c '.alerts')
-# priority="None"
-# sla_days=0
+jq -c '.[]' grouped_alerts.json | while read -r group; do
+severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
+severity_alerts=$(echo "$group" | jq -c '.alerts')
+priority="None"
+sla_days=0
 
-# case "$severity" in
-#     "CRITICAL")
-#     priority="Highest"
-#     sla_days=$highest_sla
-#     ;;
-#     "HIGH")
-#     priority="High"
-#     sla_days=$high_sla
-#     ;;
-#     "MEDIUM")
-#     priority="Medium"
-#     sla_days=$medium_sla
-#     ;;
-#     "LOW")
-#     priority="Low"
-#     sla_days=$low_sla
-#     ;;
-#     *)
-#     echo "UNKNOWN STATUS"
-#     ;;
-# esac
+case "$severity" in
+    "CRITICAL")
+    priority="Highest"
+    sla_days=$highest_sla
+    ;;
+    "HIGH")
+    priority="High"
+    sla_days=$high_sla
+    ;;
+    "MEDIUM")
+    priority="Medium"
+    sla_days=$medium_sla
+    ;;
+    "LOW")
+    priority="Low"
+    sla_days=$low_sla
+    ;;
+    *)
+    echo "UNKNOWN STATUS"
+    ;;
+esac
 
-# sla_due_date=$(date -d "$today +$sla_days days" "+%Y-%m-%d")
-# repo_name=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+sla_due_date=$(date -d "$today +$sla_days days" "+%Y-%m-%d")
+repo_name=$(echo "${{ github.repository }}" | cut -d'/' -f2)
 
-# # Prepare a summary and description for the Jira ticket
-# summary="Dependabot $today for $repo_name: $severity Vulnerabilities"
-# description="\n*Repository*: [$repo_name|https://github.com/${{ github.repository}}/security/dependabot?q=is:open+severity:$severity+sort:newest]\n *Created Date*: $today\n *Severity*: $severity\n *SLA Days*: $sla_days \n *Due Date*: $sla_due_date\n\n----\n"
+# Prepare a summary and description for the Jira ticket
+summary="Dependabot $today for $repo_name: $severity Vulnerabilities"
+description="\n*Repository*: [$repo_name|https://github.com/${{ github.repository}}/security/dependabot?q=is:open+severity:$severity+sort:newest]\n *Created Date*: $today\n *Severity*: $severity\n *SLA Days*: $sla_days \n *Due Date*: $sla_due_date\n\n----\n"
 
-# echo "Processing Dependabot vulnerability grouping..."
-# echo "Repository: $repo_name"
-# echo "Severity: $severity"
-# echo "Priority: $priority"
-# echo "SLA Days: $sla_days"
-# echo "SLA Due Date: $sla_due_date"
+echo "Processing Dependabot vulnerability grouping..."
+echo "Repository: $repo_name"
+echo "Severity: $severity"
+echo "Priority: $priority"
+echo "SLA Days: $sla_days"
+echo "SLA Due Date: $sla_due_date"
 
 # # Read all alerts into an array
 # mapfile -t alerts < <(echo "$severity_alerts" | jq -c '.[]')
