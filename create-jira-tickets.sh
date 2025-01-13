@@ -36,10 +36,9 @@ echo "Found $todays_alert_count vulnerabilities from today."
 
 # # Iterate through each group and create a Jira ticket
 jq -c '.[]' grouped_alerts.json | while read -r group; do
-          echo "$group" 
-          exit 1
-          # severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
-          # severity_alerts=$(echo "$group" | jq -c '.alerts')
+          severity=$(echo "$group" | jq -r '.severity' | tr '[:lower:]' '[:upper:]')
+          echo $severity
+          severity_alerts=$(echo "$group" | jq -c '.alerts')
           # priority="None"
           # sla_days=0
           
