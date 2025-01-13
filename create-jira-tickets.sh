@@ -114,4 +114,4 @@ done
 #     -u "${{ env.JIRA_USER_EMAIL }}:${{ env.JIRA_API_TOKEN }}" \
 #     -H "Content-Type: application/json" \
 #     -d "$issue_payload"
-# done
+done
