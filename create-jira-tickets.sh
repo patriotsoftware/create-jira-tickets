@@ -77,18 +77,18 @@ echo "Priority: $priority"
 echo "SLA Days: $sla_days"
 echo "SLA Due Date: $sla_due_date"
 
-# # Read all alerts into an array
-# mapfile -t alerts < <(echo "$severity_alerts" | jq -c '.[]')
+# Read all alerts into an array
+mapfile -t alerts < <(echo "$severity_alerts" | jq -c '.[]')
 
-# # Process the array
-# for i in "${!alerts[@]}"; do
-#     alert="${alerts[$i]}"
-#     title=$(echo "$alert" | jq -r '.security_advisory.summary')
-#     package=$(echo "$alert" | jq -r '.dependency.package.name')
-#     url=$(echo "$alert" | jq -r '.html_url')
+# Process the array
+for i in "${!alerts[@]}"; do
+    alert="${alerts[$i]}"
+    title=$(echo "$alert" | jq -r '.security_advisory.summary')
+    package=$(echo "$alert" | jq -r '.dependency.package.name')
+    url=$(echo "$alert" | jq -r '.html_url')
 
-#     description+="*Package*: $package\n    *Title*: $title\n    *Details*: $url\n\n "
-# done
+    description+="*Package*: $package\n    *Title*: $title\n    *Details*: $url\n\n "
+done
 
 # # Use jq to build the JSON object
 # issue_payload=$(jq -n --arg summary "$summary" --arg description "$description" --arg priority "$priority" --arg duedate "$sla_due_date" '{
