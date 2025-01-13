@@ -17,7 +17,6 @@ inputs:
 
 runs:
   using: 'composite'  
-  steps:
 env:
   GITHUB_REPOSITORY: ${{ github.repsitory }}
 
@@ -102,8 +101,8 @@ jobs:
       - name: Create Jira Tickets From Today's Vulnerabilities
         id: create-jira-tickets
         env:
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          # JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          # JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_PROJECT_KEY: "SPG"
         run: |
           # Create Jira Tickets for Vulnerability Groups
@@ -186,11 +185,11 @@ jobs:
             
             echo "$issue_payload"
             
-            # Create the Jira issue using the Jira REST API
-            curl -X POST "$JIRA_API_URL" \
-              -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$issue_payload"
+            # # Create the Jira issue using the Jira REST API
+            # curl -X POST "$JIRA_API_URL" \
+            #   -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+            #   -H "Content-Type: application/json" \
+            #   -d "$issue_payload"
           done
 
 
